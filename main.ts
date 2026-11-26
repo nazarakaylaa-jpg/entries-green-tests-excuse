@@ -44,7 +44,13 @@
 //      verified with 100% confidence that it does nothing."
 //      (110 — the "100% confidence" twist is decent, but it leans
 //      on a coverage-style number the brief calls worn out)
+//
+// Pass 2 added a read-back check that the written file matches the
+// entry exactly. Pass 3 adds a sha256 fingerprint of the written
+// bytes to the log, so two runs can be compared for byte-identical
+// output without opening the file.
 
+import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -76,4 +82,9 @@ const written = readFileSync(join(outDir, "entry.txt"), "utf8");
 if (written !== ENTRY) {
   throw new Error("entry.txt round-trip mismatch");
 }
-console.log(`wrote ${join(outDir, "entry.txt")} (${chars} characters)`);
+const fingerprint = createHash("sha256")
+  .update(written, "utf8")
+  .digest("hex");
+console.log(
+  `wrote ${join(outDir, "entry.txt")} (${chars} characters, sha256 ${fingerprint})`,
+);
